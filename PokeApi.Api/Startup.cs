@@ -12,6 +12,7 @@ namespace PokeApi.Api
     public class Startup
     {
         private const string swaggerEndpoint = "/swagger/v1/swagger.json";
+        private const string policyName = "AllowAllPolicy";
 
         public Startup(IConfiguration configuration)
         {
@@ -28,16 +29,25 @@ namespace PokeApi.Api
 
             #region CORS
 
-            services.AddCors(options => options.AddPolicy("AllowAllPolicy", builder => builder
-                    .AllowAnyHeader()
-                    .AllowAnyMethod()
-                    .AllowCredentials()
-                    .SetIsOriginAllowed(x => true)));
+            services.AddCors(options =>
+            {
+                options.AddPolicy("AllowAllPolicy",
+                      builder =>
+                      {
+                          builder
+                                 .AllowAnyHeader()
+                                 .AllowAnyMethod()
+                                 .AllowCredentials();
+
+                          builder.SetIsOriginAllowed(x => true);
+                          builder.WithExposedHeaders("Token-Expired");
+                      });
+            });
 
             #endregion
 
             services.AddSwaggerGen();
-            services.AddControllers(options => options.EnableEndpointRouting = false);
+            services.AddControllers(options => options.EnableEndpointRouting = false).AddNewtonsoftJson();
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
@@ -51,14 +61,14 @@ namespace PokeApi.Api
 
             app.UseSwaggerUI(c => c.SwaggerEndpoint(swaggerEndpoint, "Poke API V1"));
 
+            app.UseHttpsRedirection();
+            app.UseStaticFiles();
+
             app.UseRouting();
-
-            app.UseCors("AllowAllPolicy");
-
             app.UseAuthentication();
-
             app.UseAuthorization();
-
+            app.UseCors(policyName);
+            
             app.UseMvc();
         }
     }

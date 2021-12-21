@@ -15,15 +15,15 @@ namespace PokeApi.Api.Controllers
             _pokemonService = pokemonService;
         }
 
-        [HttpGet("{top}")]
-        public async Task<IActionResult> GetPokemons(int top = 100)
+        [HttpGet]
+        public async Task<IActionResult> GetPokemons([FromQuery] int top = 100)
         {
             var pokemons = await _pokemonService.GetAllPokemonsAsync(top);
 
             return Ok(pokemons);
         }
 
-        [HttpGet("[action]/{id}")]
+        [HttpGet("{id}")]
         public async Task<IActionResult> GetById([FromRoute] int id)
         {
             var pokemon = await _pokemonService.GetPokemonByIdAsync(id);
@@ -38,12 +38,21 @@ namespace PokeApi.Api.Controllers
 
             return pokemon is null ? NotFound() : (IActionResult)Ok(pokemon);
         }
+
         [HttpGet("[action]/{queryText}")]
         public async Task<IActionResult> FindByString([FromRoute] string queryText)
         {
             var pokemon = await _pokemonService.FindByStringAsync(queryText);
 
             return pokemon is null ? NotFound() : (IActionResult)Ok(pokemon);
+        }
+
+        [HttpGet("[action]/{id}")]
+        public async Task<IActionResult> Download([FromRoute] int id)
+        {
+            var file = await _pokemonService.DownloadByIdAsync(id);
+
+            return File(file, "application/octet-stream", "pokemon_information.json");
         }
     }
 }
